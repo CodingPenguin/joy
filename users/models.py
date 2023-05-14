@@ -3,8 +3,6 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, Literal
 
-from helpers.time_format import date_to_str
-
 
 RANK_VALUES = Literal["bronze", "silver", "gold", "platinum", "diamond", "champion", "legend"]
 
@@ -30,8 +28,3 @@ class UserUpdate(UserBase):
     bio: Optional[str]
     rank: Optional[int]
     xp: Optional[int]
-
-
-class UserDelete(BaseModel):
-    # not inherited !!!
-    id: str = Field(alias="_id")
