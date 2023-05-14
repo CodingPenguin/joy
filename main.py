@@ -1,28 +1,33 @@
-import os, motor
+import os
+from dotenv import load_dotenv
+from loguru import logger
+
 from fastapi import FastAPI
 
+from tasks.routes import router as tasks_router
+from users.routes import router as users_router
 
+from motor.motor_asyncio import AsyncIOMotorClient
+
+
+load_dotenv()
+
+# ----------- LOAD ROUTERS ----------- #
 app = FastAPI()
-
-client = motor.motor_asyncio.AsyncIOMotorClient(os.environ["MONGODB_URL"])
-db = client.production
-
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+app.include_router(tasks_router, prefix="/tasks", tags=["tasks"])
+app.include_router(users_router, prefix="/users", tags=["users"])
 
 
-@app.get("/users")
-async def users_get():
-    return {}
+# ----------- DATABASE CONNECTION ----------- #
+async def open_db() -> AsyncIOMotorClient:
+    app.state.mongodb = AsyncIOMotorClient(os.getenv("MONGODB_URL"))
+    logger.info("CONNECTED TO MONGODB!")
 
 
-@app.get("/tasks/{user_id}")
-async def tasks_get(user_id: str):
-    return {}
+async def close_db():
+    app.state.mongodb.close()
+    logger.info("CLOSED MONGODB!")
 
 
-@app.post("/tasks/{user_id}")
-async def tasks_post(user_id: str):
-    return {}
+app.add_event_handler("startup", open_db)
+app.add_event_handler("shutdown", close_db)
